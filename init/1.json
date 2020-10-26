@@ -1,0 +1,16 @@
+{
+  "casename": "TiC",
+  "suffix": "normalgw",
+  "sp": false,
+  "rkmax": 6.0,
+  "w2k": {
+    "kmesh_scf": [8, 8, 8],
+    "numk": 512,
+    "ecut": -6.0
+  },
+  "gap": {
+    "vxc": 13,
+    "kmesh_gw": [2, 2, 2],
+    "nkptgw": 8
+  }
+}

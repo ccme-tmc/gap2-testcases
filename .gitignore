@@ -30,3 +30,11 @@
 *.exe
 *.out
 *.app
+
+# directory containing temporary files
+*/tmp/
+# test workspace
+workspace/
+
+# log
+*.log
