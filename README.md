@@ -53,7 +53,8 @@ For example, a test case for face-centered cubic TiC has the following JSON stru
   "gap": {
     "version": null,
     "kmesh_gw": [2, 2, 2],
-    "nkptgw": 8
+    "nkpt": 8,
+    "emax": 5.0
   }
 }
 ```
@@ -70,14 +71,18 @@ The meaning of each key-value pair:
 For `scf` dictionary:
 
 - `version`: required WIEN2k version. `null` for any version.
+- `kmesh_scf`: kmesh for SCF when `numk` is set to zero
 - `vxc`: an integer number for specification of exchange-correlation functional
 - `numk`: number of kpoints
 - `ecut`: cutoff energy between core and valence regimes
-- `kmesh_scf`: kmesh for SCF when `numk` is set to zero
+
+and other parameters that `init_lapw` accpets.
 
 For `gap` dictionary:
 
 - `version`: required GAP version. `null` for any version.
-- `nkptgw`: number of kpoints for GW
 - `kmesh_gw`: kmesh for GW when `nkptsgw` is zero.
+- `nkp`: number of kpoints for GW
+
+and other parameters that `gap_init` accepts.
 
