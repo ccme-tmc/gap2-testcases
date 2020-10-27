@@ -36,5 +36,17 @@
 # test workspace
 workspace/
 
+# python version control
+.python-version
+# python objects
+*.pyc
+__pycache__
+
 # log
 *.log
+# distribution
+dist/
+remotes.json
+
+# maybe change later
+inputs

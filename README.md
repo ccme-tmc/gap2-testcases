@@ -1,6 +1,6 @@
 # gap2-testcases
 
-Testsuite for testing GAP2 codes.
+Testsuite for testing GAP2 codes. (build time)
 
 ## Requirements
 
@@ -39,21 +39,45 @@ For example, a test case for face-centered cubic TiC has the following JSON stru
 ```json
 {
   "casename": "TiC",
-  "suffix": "normalgw",
-  "sp": false,
+  "task": "gw",
+  "is_sp": false,
   "rkmax": 6.0,
-  "w2k": {
+  "scf": {
     "version": null,
     "kmesh_scf": [8, 8, 8],
+    "vxc": 13,
     "numk": 512,
+    "ec": 1.0e-8,
     "ecut": -6.0
   },
   "gap": {
     "version": null,
-    "vxc": 13,
     "kmesh_gw": [2, 2, 2],
     "nkptgw": 8
   }
 }
 ```
+
+The meaning of each key-value pair:
+
+- `casename`: the case name of struct file.
+- `task`: category of task for present test.
+- `rkmax`: basis set of the augmented plane waves
+- `is_sp`: if the initialization is spin-polarized
+- `scf`: a dictionary containing the initialization and running parameters for WIEN2k self-consistent field calculation.
+- `gap`: a dictionary containing the parameters parsed to `gap_init`.
+
+For `scf` dictionary:
+
+- `version`: required WIEN2k version. `null` for any version.
+- `vxc`: an integer number for specification of exchange-correlation functional
+- `numk`: number of kpoints
+- `ecut`: cutoff energy between core and valence regimes
+- `kmesh_scf`: kmesh for SCF when `numk` is set to zero
+
+For `gap` dictionary:
+
+- `version`: required GAP version. `null` for any version.
+- `nkptgw`: number of kpoints for GW
+- `kmesh_gw`: kmesh for GW when `nkptsgw` is zero.
 

@@ -1,64 +1,49 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""initialize the testcase"""
+"""initialize and run the testfarm of GAP2 code for many-body perturbation calculation
+"""
 from __future__ import print_function, with_statement
 import glob
 import os
-import shutil
-import json
-import logging
-import subprocess as sp
+from shutil import rmtree
+from argparse import ArgumentParser, RawDescriptionHelpFormatter
 
-from utils import create_logger, gap_parser
+from utils import create_logger, TestCase, workspace
 
-rootdir = "workspace"
+__project__ = "gap2-testcases"
+__version__ = "0.0.1"
 
-def init_w2k_scf(rkmax, ecut, xc, spin_polarized=False):
-    """initialze wien2k input files"""
-    initlapw = ["init_lapw", "-rkmax", str(rkmax), "-ecut",
-                str(ecut), "-vxc", str(xc)]
-    if spin_polarized:
-        initlapw.append("-sp")
-    sp.check_call(initlapw)
-
-def run_w2k(exe=None, ec=1.0e-8, spin_polarized=False):
-    """run wien2k calculation"""
-    if exe is None:
-        exe = "run_lapw"
-        if spin_polarized:
-            exe = "runsp_lapw"
-    runlapw = [exe, "-ec", str(ec)]
-    sp.check_call(runlapw)
-
-def init_testcase(jsonname, logger):
-    """initialize the inputs of test case setup by JSON file
-
-    Args:
-        jsonname (str): path to JSON file
-    """
-    with open(jsonname, 'r') as h:
-        d = json.load(h)
+def gap_parser():
+    """parser of gap test"""
+    p = ArgumentParser(description=__doc__,
+                       formatter_class=RawDescriptionHelpFormatter)
+    p.add_argument("--init", action="store_true",
+                   help="initialize WIEN2k and GAP inputs")
+    p.add_argument("--dry", action="store_true",
+                   help="dry run for test use")
+    p.add_argument("--gap", dest="gap_version", type=str, default="2c",
+                   help="gap version")
+    p.add_argument("--debug", dest="debug", action="store_true",
+                   help="debug mode")
+    p.add_argument("--force", dest="force_restart", action="store_true",
+                   help="forcing delete the workspace and restart")
+    return p.parse_args()
 
 def gap_test():
     """run initializtion"""
     args = gap_parser()
-    log_level = logging.INFO
-    if args.debug:
-        log_level = logging.debug
-    logger = create_logger(log_level)
-    if os.path.isdir(rootdir):
+    logger = create_logger(debug=args.debug)
+    if os.path.isdir(workspace):
         if args.force_restart:
-            logger.info("Forced restart")
-            shutil.rmtree(rootdir)
+            logger.info("Forced restart, cleaning workspace")
+            rmtree(workspace)
         else:
-            raise IOError("working directory exists. Remove it before continue")
+            raise IOError("workspace exists. Remove it before continue")
     testcases = list(glob.glob("init/*.json"))
     for x in testcases:
         logger.info("Found test: %s", x)
-        if args.init_all:
-            logger.info("Initiaizing")
-            init_testcase(x, logger)
-
+        tc = TestCase(x, logger, init=args.init)
+        tc.run(args.gap_version, dry=args.dry)
 
 if __name__ == "__main__":
     gap_test()

@@ -1,0 +1,7 @@
+DIST_FILES = README.md \
+			init \
+			struct_files \
+			gap_test.py \
+			.objects \
+			Makefile \
+			utils.py
