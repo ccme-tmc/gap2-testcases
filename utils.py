@@ -83,7 +83,7 @@ class TestCase(object):
         self.logger = logger
         with open(pjson, 'r') as h:
             d = json.load(h)
-        logger.info("case loaded, information:")
+        logger.info("> case loaded, information:")
         try:
             for key in ["casename", "rkmax", "is_sp", "task"]:
                 logger.info(">> %s: %s", key, d[key])
@@ -100,10 +100,10 @@ class TestCase(object):
         logger.info(">> gap initialization parameters:")
         for k, v in self.gap_args.items():
             logger.info(">> %10s : %r", k, v)
-        index = os.path.splitext(os.path.basename(pjson))[0]
+        self.index = int(os.path.splitext(os.path.basename(pjson))[0])
         self._init_w2k = init_w2k
         self._init_gap = init_gap
-        self._testcase = index + "_" + self.casename + "_task_" + self.task
+        self._testcase = str(self.index) + "_" + self.casename + "_task_" + self.task
         # prepare all inputs file under self._inputdir
         self._inputdir = os.path.join(inputsdir, self._testcase)
         # struct file at self._struct

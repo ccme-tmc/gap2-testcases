@@ -19,6 +19,8 @@ def gap_parser():
                        formatter_class=RawDescriptionHelpFormatter)
     p.add_argument("--init", action="store_true",
                    help="initialize WIEN2k and GAP inputs")
+    p.add_argument("--filter", type=int, default=None, nargs="+",
+                   help="testcases to filter out")
     p.add_argument("--init-gap", dest="init_gap", action="store_true",
                    help="only initialize GAP inputs")
     p.add_argument("--dry", action="store_true",
@@ -36,6 +38,9 @@ def gap_test():
     args = gap_parser()
     logger = create_logger(debug=args.debug)
     init_mode = args.init or args.init_gap
+    filters = args.filter
+    if filters is None:
+        filters = []
     if os.path.isdir(workspace) and not init_mode:
         if args.force_restart:
             logger.info("Forced restart, cleaning workspace")
@@ -47,6 +52,9 @@ def gap_test():
         logger.info("Found test: %s", x)
         tc = TestCase(x, logger, init_w2k=args.init,
                       init_gap=init_mode)
+        if tc.index in filters:
+            logger.info("> filtered.")
+            continue
         if init_mode:
             tc.init(args.gap_version, dry=args.dry)
         else:

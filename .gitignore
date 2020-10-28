@@ -45,6 +45,7 @@ __pycache__
 # log
 *.log
 # distribution
+mcm.info
 dist/
 remotes.json
 
