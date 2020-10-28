@@ -39,11 +39,11 @@ python gap_test.py --init
 
 This part gives more details about initialization of WIEN2k and GAP inputs.
 The control file is named after `xxx.json`, where `xxx` is an integer number.
-For example, a test case for face-centered cubic TiC has the following JSON structure
+For example, a test case for silicon has the following JSON structure
 
 ```json
 {
-  "casename": "TiC",
+  "casename": "Si",
   "task": "gw",
   "is_sp": false,
   "rkmax": 6.0,

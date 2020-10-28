@@ -1,8 +1,8 @@
 {
-  "casename": "TiC",
+  "casename": "diamond",
   "task": "gw",
   "is_sp": false,
-  "rkmax": 6.0,
+  "rkmax": 7.0,
   "scf": {
     "version": null,
     "kmesh_scf": [8, 8, 8],
@@ -15,6 +15,6 @@
     "version": null,
     "kmesh_gw": [2, 2, 2],
     "nkp": 8,
-    "emax": 5.0
+    "emax": 20.0
   }
 }
