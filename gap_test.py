@@ -19,6 +19,8 @@ def gap_parser():
                        formatter_class=RawDescriptionHelpFormatter)
     p.add_argument("--init", action="store_true",
                    help="initialize WIEN2k and GAP inputs")
+    p.add_argument("--init-gap", dest="init_gap", action="store_true",
+                   help="only initialize GAP inputs")
     p.add_argument("--dry", action="store_true",
                    help="dry run for test use")
     p.add_argument("--gap", dest="gap_version", type=str, default="2c",
@@ -33,7 +35,8 @@ def gap_test():
     """run initializtion"""
     args = gap_parser()
     logger = create_logger(debug=args.debug)
-    if os.path.isdir(workspace):
+    init_mode = args.init or args.init_gap
+    if os.path.isdir(workspace) and not init_mode:
         if args.force_restart:
             logger.info("Forced restart, cleaning workspace")
             rmtree(workspace)
@@ -42,8 +45,12 @@ def gap_test():
     testcases = list(glob.glob("init/*.json"))
     for x in testcases:
         logger.info("Found test: %s", x)
-        tc = TestCase(x, logger, init=args.init)
-        tc.run(args.gap_version, dry=args.dry)
+        tc = TestCase(x, logger, init_w2k=args.init,
+                      init_gap=init_mode)
+        if init_mode:
+            tc.init(args.gap_version, dry=args.dry)
+        else:
+            tc.run(args.gap_version, dry=args.dry)
 
 if __name__ == "__main__":
     gap_test()

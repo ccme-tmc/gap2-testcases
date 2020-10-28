@@ -25,10 +25,15 @@ For users who needs a complete test may want to generate the GW inputs themselve
 In this case, fire the following command before running the tests
 
 ```bash
-python gap_test.py --init
+python gap_test.py --init-gap
 ```
 
-to generate necessary inputs for `gap2` test.
+to generate necessary inputs for `gap2` test from WIEN2k SCF results.
+If one needs also to perform WIEN2k SCF, run
+
+```bash
+python gap_test.py --init
+```
 
 ## Build WIEN2k and GAP inputs
 

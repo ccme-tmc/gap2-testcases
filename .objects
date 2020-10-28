@@ -1,4 +1,5 @@
 DIST_FILES = README.md \
+			TODO.md \
 			init \
 			struct_files \
 			gap_test.py \

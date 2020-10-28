@@ -21,6 +21,7 @@ try:
         version_w2k = _h.readline().split('_')[1].split()[0]
 except Exception:
     pass
+gapinput_ext = ["core", "vxc", "struct", "energy", "vector", "vsp", "in1"]
 
 def which(executable):
     """emulation of which function in shutil of Python3
@@ -78,7 +79,7 @@ class TestCase(object):
         jsonname (str): path to JSON file
         logger (logging.Logger)
     """
-    def __init__(self, pjson, logger, init=False, **kwargs):
+    def __init__(self, pjson, logger, init_w2k=False, init_gap=False, **kwargs):
         self.logger = logger
         with open(pjson, 'r') as h:
             d = json.load(h)
@@ -93,19 +94,47 @@ class TestCase(object):
         logger.info(">> wien2k SCF initialization parameters:")
         for k, v in self.scf_args.items():
             logger.info(">> %10s : %r", k, v)
+        self._w2k_nprocs = self.scf_args.get("nprocs", 1)
         self.gap_args = d["gap"]
+        self._gap_nprocs = self.gap_args.get("nprocs", 1)
         logger.info(">> gap initialization parameters:")
         for k, v in self.gap_args.items():
             logger.info(">> %10s : %r", k, v)
         index = os.path.splitext(os.path.basename(pjson))[0]
-        self._nprocs = 1
-        self._init = init
+        self._init_w2k = init_w2k
+        self._init_gap = init_gap
         self._testcase = index + "_" + self.casename + "_task_" + self.task
+        # prepare all inputs file under self._inputdir
         self._inputdir = os.path.join(inputsdir, self._testcase)
+        # struct file at self._struct
         self._struct = os.path.join(structdir, self.casename + ".struct")
+        # wien2k calculation in self._wiendir
         self._wiendir = os.path.join(self._inputdir, self.casename)
+        # gap inputs file in self._gapdir
         self._gapdir = os.path.join(self._inputdir, "gap")
+        # the workspace to run gap.x
         self._workspace = os.path.join(workspace, self._testcase)
+
+    def init(self, gap_version, dry=False):
+        """initialize test case
+
+        Args:
+            dry (bool) : fake run for workflow test
+        """
+        gap_init = "gap" + gap_version + "_init"
+        if which(gap_init) is None and not dry:
+            info = "gap_init for version %s is not found: %s" % (gap_version, gap_init)
+            self.logger.error(info)
+            raise ValueError(info)
+        self._create_input_case()
+        self._switch_to_wien_case()
+        if not dry:
+            if self._init_w2k:
+                self._init_w2k_scf()
+                self._run_w2k_scf()
+            if self._init_gap:
+                self._run_gap_init(gap_init)
+        self._switch_to_rootdir()
 
     def run(self, gap_version, dry=False):
         """start test case
@@ -113,26 +142,12 @@ class TestCase(object):
         Args:
             dry (bool) : fake run for workflow test
         """
-        gap_init = "gap" + gap_version + "_init"
-        if which(gap_init) is None:
-            info = "gap_init for version %s is not found: %s" % (gap_version, gap_init)
-            self.logger.error(info)
-            raise ValueError(info)
-        gap_x = "gap" + gap_version + {1: ""}.get(self._nprocs, "-mpi") + ".x"
-        if which(gap_x) is None:
+        gap_x = "gap" + gap_version + {1: ""}.get(self._gap_nprocs, "-mpi") + ".x"
+        if which(gap_x) is None and not dry:
             info = "gap.x for version %s is not found: %s" % (gap_version, gap_x)
             self.logger.error(info)
             raise ValueError(info)
 
-        if self._init:
-            self._create_input_case()
-            self._switch_to_wien_case()
-            if not dry:
-                self._init_w2k_scf()
-                self._run_w2k_scf()
-                self._init_gap(gap_init)
-            self._switch_to_rootdir()
-            return
         self._link_inputs_to_workspace_case()
         self._switch_to_workspace_case()
         if not dry:
@@ -158,20 +173,22 @@ class TestCase(object):
             info = "fail to initialize %s" % self._testcase
             self.logger.error(info)
 
-    def _init_gap(self, gap_init):
+    def _run_gap_init(self, gap_init):
         """initialize gap inputs"""
-        initgap = [gap_init, "-d", self._gapdir, "-t", self.task]
+        #initgap = [gap_init, "-d", self._gapdir, "-t", self.task]
+        initgap = [gap_init, "-d", self._gapdir,]
         nkp = self.gap_args.pop("nkp")
         if nkp > 0:
             initgap.extend(["-nkp", str(nkp)])
         else:
             kmesh = self.gap_args.get("kmesh_gw")
             raise NotImplementedError
+        # spin-unpolarized gw with sp input
         if self.is_sp:
             initgap.extend(["-s", "1"])
         # pop out other arguments not belonging to gap_init
-        for k in ["version", "kmesh_gw"]:
-            self.gap_args.pop(k)
+        for k in ["version", "kmesh_gw", "nprocs"]:
+            self.gap_args.pop(k, None)
         for k, v in self.gap_args.items():
             initgap.extend(["-"+k, str(v)])
         try:
@@ -204,8 +221,8 @@ class TestCase(object):
             gap_x (str): gap.x executable
         """
         rungap = [gap_x,]
-        if self._nprocs > 1:
-            rungap = ["mpirun", "-np", str(self._nproces)] + rungap
+        if self._gap_nprocs > 1:
+            rungap = ["mpirun", "-np", str(self._gap_nprocs)] + rungap
         try:
             self.logger.info(">> run gap.x with %s", " ".join(rungap))
             sp.check_call(rungap)
@@ -231,4 +248,12 @@ class TestCase(object):
             copy2(self._struct, self._wiendir)
 
     def _link_inputs_to_workspace_case(self):
-        pass
+        if not os.path.isdir(self._workspace):
+            os.makedirs(self._workspace)
+        for f in [self.casename + "." + ext for ext in gapinput_ext] + ["gw.inp"]:
+            src = os.path.join(self._gapdir, f)
+            dst = os.path.join(self._workspace, f)
+            if os.path.isfile(src):
+                os.symlink(src, dst)
+                self.logger.debug("linking %s to %s", src, dst)
+

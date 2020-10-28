@@ -9,12 +9,19 @@ SED = gsed
 
 include .objects
 
-.PHONY: default dry dist clean veyrclean commit amend
+.PHONY: default dry clean veyrclean cleanall commit amend push initall
 
 default: dry
 
 dry:
 	python gap_test.py --init --dry
+	python gap_test.py --dry
+
+initall:
+	python gap_test.py --init
+
+initgap:
+	python gap_test.py --init-gap
 
 clean:
 	find . -name "*.log" -delete
@@ -23,7 +30,9 @@ clean:
 	rm -rf dist __pycache__
 
 veryclean: clean
-	rm -rf inputs
+	rm -rf inputs workspace
+
+cleanall: veryclean
 
 commit:
 	git commit -F $(MESSAGE_FILE)
@@ -32,7 +41,7 @@ commit:
 amend:
 	git commit --amend
 
-dist: $(DIST_TARBALL)
+remote: $(DIST_TARBALL)
 	./dist.py
 
 $(DIST_TARBALL): $(DIST_FILES)
