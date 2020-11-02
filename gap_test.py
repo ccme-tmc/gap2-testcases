@@ -19,8 +19,11 @@ def gap_parser():
                        formatter_class=RawDescriptionHelpFormatter)
     p.add_argument("--init", action="store_true",
                    help="initialize WIEN2k and GAP inputs")
-    p.add_argument("--filter", type=int, default=None, nargs="+",
-                   help="testcases to filter out")
+    filters = p.add_mutually_exclusive_group()
+    filters.add_argument("--filter", type=int, default=None, nargs="+",
+                         help="testcases to filter out")
+    filters.add_argument("--choose", type=int, default=None, nargs="+",
+                         help="testcases to run")
     p.add_argument("--init-gap", dest="init_gap", action="store_true",
                    help="only initialize GAP inputs")
     p.add_argument("--dry", action="store_true",
@@ -38,9 +41,6 @@ def gap_test():
     args = gap_parser()
     logger = create_logger(debug=args.debug)
     init_mode = args.init or args.init_gap
-    filters = args.filter
-    if filters is None:
-        filters = []
     if os.path.isdir(workspace) and not init_mode:
         if args.force_restart:
             logger.info("Forced restart, cleaning workspace")
@@ -48,13 +48,25 @@ def gap_test():
         else:
             raise IOError("workspace exists. Remove it before continue")
     testcases = list(glob.glob("init/*.json"))
+    filters = args.filter
+    if filters is None:
+        filters = []
+    logger.info("Filtering tests: %r", filters)
+    choices = args.choose
+    if choices is None:
+        logger.info("Selected all tests")
+        choices = [int(x.split('/.')[1]) for x in testcases]
+    else:
+        logger.info("Selected tests: %r", choices)
+
     for x in testcases:
         logger.info("Found test: %s", x)
-        tc = TestCase(x, logger, init_w2k=args.init,
-                      init_gap=init_mode)
-        if tc.index in filters:
+        index = int(x.split('/.')[1])
+        if index in filters or index not in choices:
             logger.info("> filtered.")
             continue
+        tc = TestCase(x, logger, init_w2k=args.init,
+                      init_gap=init_mode)
         if init_mode:
             tc.init(args.gap_version, dry=args.dry)
         else:
