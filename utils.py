@@ -39,7 +39,7 @@ def which(executable):
     return None
 
 
-def create_logger(name="results_teg.log", debug=False):
+def create_logger(name="results_gap.log", debug=False):
     """create a logger"""
     log_level = logging.INFO
     if debug:

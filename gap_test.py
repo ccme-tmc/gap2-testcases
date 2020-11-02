@@ -55,13 +55,13 @@ def gap_test():
     choices = args.choose
     if choices is None:
         logger.info("Selected all tests")
-        choices = [int(x.split('/.')[1]) for x in testcases]
+        choices = [int(os.path.splitext(os.path.basename(x))[0]) for x in testcases]
     else:
         logger.info("Selected tests: %r", choices)
 
     for x in testcases:
         logger.info("Found test: %s", x)
-        index = int(x.split('/.')[1])
+        index = int(os.path.splitext(os.path.basename(x))[0])
         if index in filters or index not in choices:
             logger.info("> filtered.")
             continue

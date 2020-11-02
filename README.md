@@ -5,11 +5,11 @@ Testsuite for testing GAP2 codes. (build time)
 ## Requirements
 
 - Python >= 3.5 or Python2 >= 2.7.18 to run generator script.
-- Wien2k for preparing DFT starting point. Favorably version 14.2
-- GAP code, for generating inputs for GW and test.
+- WIEN2k for preparing DFT starting point. Favorably version 14.2
+- GAP (>=2c) code, for generating inputs for GW and test.
 
 Note that environment variable `WIENROOT` must be set if one wants
-to initialze the WIEN2k and GAP inputs on his own.
+to initialze the WIEN2k and GAP inputs.
 
 ## Usage
 
@@ -18,6 +18,12 @@ To use the testsuite, clone the repository to some local path, then enter the pa
 ```bash
 python gap_test.py
 ```
+
+The input files in `inputs` will be symlinked to `workspace` directory and start the testing of `gap`.
+When the test finished, you can use `cp -rL workspace path/to/store` to copy all the results and inputs
+to `path/to/store`. Pay attention to large temporary files, e.g. `.eps`, when copying.
+
+## Prepare inputs
 
 However, the cases distributed along with the test infrastructure is not a complete set,
 since the input files for GAP can be too large for convenient distribution.
@@ -35,7 +41,7 @@ If one needs also to perform WIEN2k SCF, run
 python gap_test.py --init
 ```
 
-## Build WIEN2k and GAP inputs
+## Build samples for WIEN2k and GAP inputs
 
 This part gives more details about initialization of WIEN2k and GAP inputs.
 The control file is named after `xxx.json`, where `xxx` is an integer number.
