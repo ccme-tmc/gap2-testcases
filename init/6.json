@@ -1,0 +1,20 @@
+{
+  "casename": "hBN-ml-vac-20ang",
+  "task": "gw",
+  "is_sp": false,
+  "rkmax": 6.0,
+  "scf": {
+    "version": null,
+    "kmesh_scf": [9, 9, 1],
+    "numk": 100,
+    "ecut": -6.0,
+    "ec": 1.0e-8,
+    "vxc": 13
+  },
+  "gap": {
+    "version": null,
+    "kmesh_gw": [3, 3, 1],
+    "nkp": 6,
+    "emax": 20.0
+  }
+}

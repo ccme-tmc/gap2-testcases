@@ -1,0 +1,20 @@
+{
+  "casename": "cBN",
+  "task": "gw",
+  "is_sp": false,
+  "rkmax": 6.0,
+  "scf": {
+    "version": null,
+    "kmesh_scf": [4, 4, 4],
+    "numk": 64,
+    "ecut": -6.0,
+    "ec": 1.0e-8,
+    "vxc": 13
+  },
+  "gap": {
+    "version": null,
+    "kmesh_gw": [2, 2, 2],
+    "nkp": 8,
+    "emax": 20.0
+  }
+}

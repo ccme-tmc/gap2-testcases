@@ -138,13 +138,15 @@ class TestCase(object):
                 self._run_gap_init(gap_init)
         self._switch_to_rootdir()
 
-    def run(self, gap_version, dry=False):
+    def run(self, gap_version, nprocs=None, dry=False):
         """start test case
 
         Args:
             dry (bool) : fake run for workflow test
         """
-        gap_x = "gap" + gap_version + {1: ""}.get(self._gap_nprocs, "-mpi") + ".x"
+        if nprocs is None:
+            nprocs = self._gap_nprocs
+        gap_x = "gap" + gap_version + {1: ""}.get(nprocs, "-mpi") + ".x"
         if which(gap_x) is None and not dry:
             info = "gap.x for version %s is not found: %s" % (gap_version, gap_x)
             self.logger.error(info)
@@ -153,7 +155,7 @@ class TestCase(object):
         self._link_inputs_to_workspace_case()
         self._switch_to_workspace_case()
         if not dry:
-            self._run_gap(gap_x)
+            self._run_gap(gap_x, nprocs)
         self._switch_to_rootdir()
 
     def _init_w2k_scf(self):
@@ -216,15 +218,15 @@ class TestCase(object):
             info = "fail to run SCF for %s" % self._testcase
             self.logger.error(info)
 
-    def _run_gap(self, gap_x):
+    def _run_gap(self, gap_x, nprocs):
         """run gap calculation
         
         Args:
             gap_x (str): gap.x executable
         """
         rungap = [gap_x,]
-        if self._gap_nprocs > 1:
-            rungap = ["mpirun", "-np", str(self._gap_nprocs)] + rungap
+        if nprocs > 1:
+            rungap = ["mpirun", "-np", str(nprocs)] + rungap
         try:
             self.logger.info(">> run gap.x with %s", " ".join(rungap))
             sp.check_call(rungap)

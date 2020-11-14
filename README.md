@@ -82,9 +82,9 @@ The meaning of each key-value pair:
 For `scf` dictionary:
 
 - `version`: required WIEN2k version. `null` for any version.
-- `kmesh_scf`: kmesh for SCF when `numk` is set to zero
 - `vxc`: an integer number for specification of exchange-correlation functional
 - `numk`: number of kpoints
+- `kmesh_scf`: intended kmesh for SCF set by `kgen` with `numk`
 - `ecut`: cutoff energy between core and valence regimes
 
 and other parameters that `init_lapw` accpets.
@@ -92,8 +92,8 @@ and other parameters that `init_lapw` accpets.
 For `gap` dictionary:
 
 - `version`: required GAP version. `null` for any version.
-- `kmesh_gw`: kmesh for GW when `nkptsgw` is zero.
 - `nkp`: number of kpoints for GW
+- `kmesh_gw`: intended kmesh for GW set by `kgen` with `nkp`
 
 and other parameters that `gap_init` accepts.
 

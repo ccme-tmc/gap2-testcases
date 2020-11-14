@@ -10,7 +10,7 @@ from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from utils import create_logger, TestCase, workspace
 
 __project__ = "gap2-testcases"
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 
 def gap_parser():
     """parser of gap test"""
@@ -23,6 +23,8 @@ def gap_parser():
                          help="testcases to filter out")
     filters.add_argument("--choose", type=int, default=None, nargs="+",
                          help="testcases to run")
+    p.add_argument("-n", type=int, dest="nprocs", default=1,
+                   help="number of processors")
     p.add_argument("--init-gap", dest="init_gap", action="store_true",
                    help="only initialize GAP inputs")
     p.add_argument("--dry", action="store_true",
@@ -64,7 +66,7 @@ def gap_test():
             tc.init(args.gap_version, dry=args.dry)
         else:
             try:
-                tc.run(args.gap_version, dry=args.dry)
+                tc.run(args.gap_version, nprocs=args.nprocs, dry=args.dry)
             except IOError:
                 logger.warning("Test case %s (%s) has been run before hand. Skip.",
                                tc.casename, x)
