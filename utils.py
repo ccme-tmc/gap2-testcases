@@ -4,7 +4,7 @@ import json
 import logging
 import subprocess as sp
 import os
-from shutil import copy2
+from shutil import copy2, rmtree
 
 rootdir = os.path.dirname(__file__)
 workspace = os.path.join(rootdir, "workspace")
@@ -79,8 +79,10 @@ class TestCase(object):
         jsonname (str): path to JSON file
         logger (logging.Logger)
     """
-    def __init__(self, pjson, logger, init_w2k=False, init_gap=False, **kwargs):
+    def __init__(self, pjson, logger, init_w2k=False, init_gap=False,
+                 force_restart=False, **kwargs):
         self.logger = logger
+        self._force_restart = force_restart
         with open(pjson, 'r') as h:
             d = json.load(h)
         logger.info("> case loaded, information:")
@@ -162,7 +164,7 @@ class TestCase(object):
         if self.is_sp:
             initlapw.append("-sp")
         numk = self.scf_args.get("numk")
-        if numk == 0:
+        if numk is None:
             raise NotImplementedError("manual kmesh is not supported")
         else:
             initlapw.extend(["-numk", str(numk)])
@@ -248,8 +250,12 @@ class TestCase(object):
             copy2(self._struct, self._wiendir)
 
     def _link_inputs_to_workspace_case(self):
-        if not os.path.isdir(self._workspace):
-            os.makedirs(self._workspace)
+        if os.path.isdir(self._workspace):
+            if self._force_restart:
+                rmtree(self._workspace)
+            else:
+                raise IOError("workspace directory exists!")
+        os.makedirs(self._workspace)
         for f in [self.casename + "." + ext for ext in gapinput_ext] + ["gw.inp"]:
             src = os.path.join(self._gapdir, f)
             dst = os.path.join(self._workspace, f)

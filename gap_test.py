@@ -5,7 +5,6 @@
 from __future__ import print_function, with_statement
 import glob
 import os
-from shutil import rmtree
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
 
 from utils import create_logger, TestCase, workspace
@@ -33,7 +32,7 @@ def gap_parser():
     p.add_argument("--debug", dest="debug", action="store_true",
                    help="debug mode")
     p.add_argument("--force", dest="force_restart", action="store_true",
-                   help="forcing delete the workspace and restart")
+                   help="forcing restart an existing testcase")
     return p.parse_args()
 
 def gap_test():
@@ -41,12 +40,6 @@ def gap_test():
     args = gap_parser()
     logger = create_logger(debug=args.debug)
     init_mode = args.init or args.init_gap
-    if os.path.isdir(workspace) and not init_mode:
-        if args.force_restart:
-            logger.info("Forced restart, cleaning workspace")
-            rmtree(workspace)
-        else:
-            raise IOError("workspace exists. Remove it before continue")
     testcases = list(glob.glob("init/*.json"))
     filters = args.filter
     if filters is None:
@@ -66,11 +59,15 @@ def gap_test():
             logger.info("> filtered.")
             continue
         tc = TestCase(x, logger, init_w2k=args.init,
-                      init_gap=init_mode)
+                      init_gap=init_mode, force_restart=args.force_restart)
         if init_mode:
             tc.init(args.gap_version, dry=args.dry)
         else:
-            tc.run(args.gap_version, dry=args.dry)
+            try:
+                tc.run(args.gap_version, dry=args.dry)
+            except IOError:
+                logger.warning("Test case %s (%s) has been run before hand. Skip.",
+                               tc.casename, x)
 
 if __name__ == "__main__":
     gap_test()

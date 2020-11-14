@@ -35,7 +35,7 @@ veryclean: clean
 cleanall: veryclean
 
 commit:
-	git commit -F $(MESSAGE_FILE)
+	git commit -t $(MESSAGE_FILE)
 	rm -f $(MESSAGE_FILE); touch $(MESSAGE_FILE)
 
 amend:
