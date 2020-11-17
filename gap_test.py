@@ -7,7 +7,7 @@ import glob
 import os
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
 
-from utils import create_logger, TestCase, workspace
+from utils import create_logger, TestCase
 
 __project__ = "gap2-testcases"
 __version__ = "0.0.2"
@@ -21,25 +21,21 @@ def gap_parser():
     filters = p.add_mutually_exclusive_group()
     filters.add_argument("--filter", type=int, default=None, nargs="+",
                          help="testcases to filter out")
-    filters.add_argument("--choose", type=int, default=None, nargs="+",
-                         help="testcases to run")
-    p.add_argument("-n", type=int, dest="nprocs", default=1,
-                   help="number of processors")
+    filters.add_argument("--choose", type=int, default=None, nargs="+", help="testcases to run")
+    p.add_argument("-n", type=int, dest="nprocs", default=1, help="number of processors")
     p.add_argument("--init-gap", dest="init_gap", action="store_true",
-                   help="only initialize GAP inputs")
-    p.add_argument("--dry", action="store_true",
-                   help="dry run for test use")
-    p.add_argument("--gap", dest="gap_version", type=str, default="2c",
-                   help="gap version")
-    p.add_argument("--debug", dest="debug", action="store_true",
-                   help="debug mode")
+                   help="only initialize GAP inputs with finished WIEN2k SCF")
+    p.add_argument("--dry", action="store_true", help="dry run for test use")
+    p.add_argument("--gap", dest="gap_version", type=str, default="2c", help="gap version")
+    p.add_argument("-d", dest="workspace", type=str, default="workspace", help="working directory")
+    p.add_argument("--debug", dest="debug", action="store_true", help="debug mode")
     p.add_argument("--force", dest="force_restart", action="store_true",
                    help="forcing restart an existing testcase")
-    return p.parse_args()
+    return p
 
 def gap_test():
     """run initializtion"""
-    args = gap_parser()
+    args = gap_parser().parse_args()
     logger = create_logger(debug=args.debug)
     init_mode = args.init or args.init_gap
     testcases = list(glob.glob("init/*.json"))
@@ -60,7 +56,7 @@ def gap_test():
         if index in filters or index not in choices:
             logger.info("> filtered.")
             continue
-        tc = TestCase(x, logger, init_w2k=args.init,
+        tc = TestCase(x, logger, init_w2k=args.init, workspace=args.workspace,
                       init_gap=init_mode, force_restart=args.force_restart)
         if init_mode:
             tc.init(args.gap_version, dry=args.dry)

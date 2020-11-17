@@ -7,7 +7,6 @@ import os
 from shutil import copy2, rmtree
 
 rootdir = os.path.dirname(__file__)
-workspace = os.path.join(rootdir, "workspace")
 structdir = os.path.join(rootdir, "struct_files")
 inputsdir = os.path.join(rootdir, "inputs")
 refersdir = os.path.join(rootdir, "refs")
@@ -80,7 +79,7 @@ class TestCase(object):
         logger (logging.Logger)
     """
     def __init__(self, pjson, logger, init_w2k=False, init_gap=False,
-                 force_restart=False, **kwargs):
+                 workspace=None, force_restart=False, **kwargs):
         self.logger = logger
         self._force_restart = force_restart
         with open(pjson, 'r') as h:
@@ -115,6 +114,9 @@ class TestCase(object):
         # gap inputs file in self._gapdir
         self._gapdir = os.path.join(self._inputdir, "gap")
         # the workspace to run gap.x
+        if workspace is None:
+            workspace = "workspace"
+        workspace = os.path.join(rootdir, workspace)
         self._workspace = os.path.join(workspace, self._testcase)
 
     def init(self, gap_version, dry=False):
@@ -254,7 +256,9 @@ class TestCase(object):
     def _link_inputs_to_workspace_case(self):
         if os.path.isdir(self._workspace):
             if self._force_restart:
-                rmtree(self._workspace)
+                #rmtree(self._workspace)
+                self.logger.warning("force restart anyway")
+                return
             else:
                 raise IOError("workspace directory exists!")
         os.makedirs(self._workspace)

@@ -52,7 +52,11 @@ def dist():
     tarball = os.path.join(os.path.dirname(__file__), "dist",
                            "%s-%s.tar.gz" % (__project__, __version__))
     for remote_ip, dirpath in dist_remotes.items():
-        rsync_and_untar(tarball, remote_ip, dirpath)
+        if isinstance(dirpath, list):
+            for dp in dirpath:
+                rsync_and_untar(tarball, remote_ip, dp)
+        else:
+            rsync_and_untar(tarball, remote_ip, dirpath)
 
 
 if __name__ == "__main__":

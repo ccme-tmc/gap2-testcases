@@ -42,7 +42,7 @@ amend:
 	git commit --amend
 
 remote: $(DIST_TARBALL)
-	./dist.py
+	python dist.py
 
 $(DIST_TARBALL): $(DIST_FILES)
 	mkdir -p dist/$(PROJ)
