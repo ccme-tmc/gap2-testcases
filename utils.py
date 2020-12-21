@@ -1,10 +1,15 @@
 # -*- coding: utf-8 -*-
 """testcase utitlies"""
+try:
+    from __future__ import print_function
+except ImportError:
+    pass
 import json
 import logging
 import subprocess as sp
+import re
 import os
-from shutil import copy2, rmtree
+from shutil import copy2
 
 rootdir = os.path.dirname(__file__)
 structdir = os.path.join(rootdir, "struct_files")
@@ -36,6 +41,27 @@ def which(executable):
     if path:
         return path.strip()
     return None
+
+
+def trim_after(string, regex, include_pattern=False):
+    """Trim a string after the first match of regex.
+
+    If fail to match any pattern, the original string is returned
+
+    The matched pattern is trimed as well.
+
+    Args:
+        string (str): the string to trim
+        regex (regex): the regex to match
+        include_pattern (bool): if the matched pattern is included
+        in the return string
+    """
+    m = re.search(regex, string)
+    if m is None:
+        if include_pattern:
+            return string[:m.end()]
+        return string[:m.start()]
+    return string
 
 
 def create_logger(name="results_gap.log", debug=False):
@@ -170,8 +196,7 @@ class TestCase(object):
         numk = self.scf_args.get("numk")
         if numk is None:
             raise NotImplementedError("manual kmesh is not supported")
-        else:
-            initlapw.extend(["-numk", str(numk)])
+        initlapw.extend(["-numk", str(numk)])
         try:
             self.logger.info(">> initializing with %s", " ".join(initlapw))
             sp.check_call(initlapw)
@@ -181,8 +206,8 @@ class TestCase(object):
 
     def _run_gap_init(self, gap_init):
         """initialize gap inputs"""
-        #initgap = [gap_init, "-d", self._gapdir, "-t", self.task]
-        initgap = [gap_init, "-d", self._gapdir,]
+        initgap = [gap_init, "-d", self._gapdir, "-t", self.task]
+        #initgap = [gap_init, "-d", self._gapdir,]
         nkp = self.gap_args.pop("nkp")
         if nkp > 0:
             initgap.extend(["-nkp", str(nkp)])
@@ -222,7 +247,7 @@ class TestCase(object):
 
     def _run_gap(self, gap_x, nprocs):
         """run gap calculation
-        
+
         Args:
             gap_x (str): gap.x executable
         """
@@ -259,8 +284,7 @@ class TestCase(object):
                 #rmtree(self._workspace)
                 self.logger.warning("force restart anyway")
                 return
-            else:
-                raise IOError("workspace directory exists!")
+            raise IOError("workspace directory exists!")
         os.makedirs(self._workspace)
         for f in [self.casename + "." + ext for ext in gapinput_ext] + ["gw.inp"]:
             src = os.path.join(self._gapdir, f)
@@ -269,3 +293,118 @@ class TestCase(object):
                 os.symlink(src, dst)
                 self.logger.debug("linking %s to %s", src, dst)
 
+
+class GwInp():
+    """
+    The changable parameters are saved in a dict, with the names of parameters as keys.
+    The values are 6-member tuple, with members as
+
+    1. Data type
+    2. Pattern to match target block
+    3. Default value
+    4. Line in the block, 0 for one-line parameter
+    5. Number of paramters in the block line, 0 for one-line parameter
+    6. Index of parameter in the line, 0 for one-line parameter
+
+    Args:
+        path_gw_inp (str) : path to gw.inp
+    """
+    available_params = {
+        "pwm": (float, r"%BareCoul", 2.0, 1, 2, 0),
+        "kmr": (float, r"%MixBasis", 0.75, 1, 1, 0),
+        "barcevtol": (float, r"barcevtol", 0.1, 0, 0, 0),
+        "MB_emax": (float, r"MB_emax", 20.0, 0, 0, 0),
+        "lmbmax": (int, r"%MixBasis", 3, 2, 3, 0),
+        "wftol": (float, r"%MixBasis", 1.0E-4, 2, 3, 1),
+        "lblmax": (int, r"%MixBasis", 0, 2, 3, 2),
+        "iop_core": (int, r"iop_core", 0, 0, 0, 0),
+        "iop_fgrid": (int, r"%FreqGrid", 3, 1, 5, 0),
+        "nomeg": (int, r"%FreqGrid", 16, 1, 5, 1),
+        "omegmax": (float, r"%FreqGrid", 0.42, 1, 5, 2),
+        "omegmin": (float, r"%FreqGrid", 0.00, 1, 5, 3),
+        "emaxpol": (float, r"emaxpol", 1.0E10, 0, 0, 0),
+        "emaxsc": (float, r"emaxsc", 1.0E10, 0, 0, 0),
+        }
+
+    @classmethod
+    def get_available_params(cls):
+        """return the changable parameters"""
+        return tuple(cls.available_params.keys())
+
+    def __init__(self, path_gw_inp='gw.inp'):
+        with open(path_gw_inp, 'r') as h:
+            self._lines = [l for l in h.readlines()]
+        self._params = {}
+        self._locate_params()
+
+    def _locate_params(self):
+        """locate line indices of parameters"""
+        for i, line in enumerate(self._lines):
+            l = trim_after(line, r'#').strip()
+            if l == '':
+                continue
+            for k, v in self.available_params.items():
+                if l.startswith(v[1]):
+                    self._params[k] = i + v[3]
+                    continue
+
+    @property
+    def params(self):
+        """dict, line index of parameter"""
+        return self._params
+
+    def get_param(self, key):
+        """Get the value of the parameter specified by key
+        """
+        if key not in self.available_params:
+            raise KeyError("%s is not available" % key)
+        raise NotImplementedError
+
+    def modify_params(self, **kwargs):
+        """Change parameters
+
+        Note:
+            To modify parameters in block, the block should be present
+            in the input file, otherwise it will be written as one-line
+            parameter. This may be fixed in the future
+        """
+        gwlines = []
+        linos = []
+        params = []
+        extras = []
+        for k in kwargs:
+            if k in self.available_params:
+                params.append(k)
+                linos.append(self._params[k])
+            else:
+                extras.append("%s = %s\n" % (k, kwargs[k]))
+        for i, l in enumerate(self._lines):
+            l = l.strip()
+            if i in linos:
+                k = params[linos.index(i)]
+                pat = _get_pattern(self.available_params[k][-2])
+                sub = _get_substr(*self.available_params[k][-2:], kwargs[k])
+                l = re.sub(pat, sub, l.strip())
+            gwlines.append(l+'\n')
+        gwlines.extend(extras)
+        return gwlines
+
+
+_COMMENT_PAT = r"(#[\w \|\(\),\.-]*)?"
+
+def _get_pattern(n):
+    '''Return the pattern of n parameter block line'''
+    if n > 0:
+        s = [r"([\w \.-]+)",] * n
+        return r'^' + r'\|'.join(s) + _COMMENT_PAT + r'$'
+    return r"^" + r"([\w \.-]+)=([\w \.-]+)" + _COMMENT_PAT + r"$"
+
+def _get_substr(n, ind, value):
+    '''Substitute parameter with value'''
+    if n == 0:
+        sub = "\\1 = " + str(value) + ' \\3'
+    else:
+        sublist = ["\\"+str(i+1) for i in range(n)]
+        sublist[ind] = str(value)
+        sub = ' | '.join(sublist) + ' \\' + str(n+1)
+    return sub
