@@ -1,8 +1,8 @@
 DIST_FILES = README.md \
 			TODO.md \
+			backend \
 			init \
 			struct_files \
 			gap_test.py \
 			.objects \
-			Makefile \
-			utils.py
+			Makefile

@@ -1,0 +1,20 @@
+{
+  "casename": "InP",
+  "task": "gw",
+  "is_sp": false,
+  "rkmax": 7.0,
+  "scf": {
+    "version": null,
+    "kmesh_scf": [6, 6, 6],
+    "numk": 216,
+    "ecut": -6.0,
+    "ec": 1.0e-8,
+    "vxc": 13
+  },
+  "gap": {
+    "version": null,
+    "kmesh_gw": [6, 6, 6],
+    "nkp": 216,
+    "emax": 20.0
+  }
+}
