@@ -173,10 +173,17 @@ class TestCase(object):
             maxnprocs (int)
             dry (bool) : fake run for workflow test
         """
+        gap_nprocs = [self._gap_nprocs,]
+        if isinstance(self._gap_nprocs, list):
+            gap_nprocs = self._gap_nprocs
+        gap_nprocs.sort(reverse=True)
         if nprocs is None:
-            nprocs = self._gap_nprocs
+            nprocs = gap_nprocs[0]
         else:
-            nprocs = min(nprocs, self._gap_nprocs)
+            for x in gap_nprocs:
+                if x < nprocs:
+                    x = nprocs
+                    break
         gap_x = "gap" + gap_version + {1: ""}.get(nprocs, "-mpi") \
                 + {None: ""}.get(gap_suffix, "-{}".format(gap_suffix)) + ".x"
         if which(gap_x) is None and not dry:
