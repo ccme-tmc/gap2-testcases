@@ -31,13 +31,7 @@ except Exception:
 
 gapinput_ext = ["core", "vxc", "struct", "energy", "vector", "vsp", "in1"]
 
-# predefined set of test cases for comparison with literature
-predefine_sets = {
-    "JiangH16": ["JH16"],
-    }
-
-
-def get_all_testcases():
+def get_all_tcnames():
     """get all available tests"""
     all_tests = []
     for x in os.listdir(initdir):
@@ -46,11 +40,11 @@ def get_all_testcases():
             _logger.debug("searching %s", x)
             jsons = [os.path.basename(y) for y in glob.glob(os.path.join(d, "*.json"))]
             jsons.sort(key=lambda y: int(y.split('_')[0]))
-            all_tests.extend(os.path.join(x, y) for y in jsons)
+            all_tests.extend(os.path.join(x, os.path.splitext(y)[0]) for y in jsons)
     _logger.info("all available test cases: %r", all_tests)
     return all_tests
 
-def find_tests(include=None, exclude=None, use_predef=None):
+def find_tests(include=None, exclude=None):
     """find test cases satisfying conditions.
 
     If the same testcase is present in both include and exclude,
@@ -58,23 +52,15 @@ def find_tests(include=None, exclude=None, use_predef=None):
     """
     def _have_id_name(index, name, l):
         d, fn = name.split('/')
+        fn = fn.strip('.json')
         if index in l or d in l or fn in l or name in l:
             return True
         return False
-    all_tests = get_all_testcases()
+    all_tests = get_all_tcnames()
     found = []
-
-    if not (include is None or use_predef is None):
-        raise ValueError("specify either include or use_predef")
 
     if include is not None:
         include = intify(include)
-
-    if use_predef is not None:
-        include = predefine_sets.get(use_predef, None)
-        if include is None:
-            raise ValueError("Undefined set name {}".format(use_predef))
-
     if exclude is not None:
         exclude = intify(exclude)
     else:
@@ -96,14 +82,15 @@ class TestCase(object):
     """test case
 
     Args:
-        jsonname (str): path to JSON file
+        tcname (str): name of testcase, relative to the init directory
         logger (logging.Logger): logger for recording running info
     """
-    def __init__(self, pjson, logger, init_mode=False,
+    def __init__(self, tcname, logger, init_mode=False,
                  workspace=None, force_restart=False, **kwargs):
         self.logger = logger
         self._force_restart = force_restart
-        with open(os.path.join(initdir, pjson), 'r') as h:
+        self._tcname = tcname
+        with open(os.path.join(initdir, tcname+".json"), 'r') as h:
             d = json.load(h)
         _logger.info("> case loaded, information:")
         try:
@@ -122,14 +109,11 @@ class TestCase(object):
         _logger.info(">> gap initialization parameters:")
         for k, v in self.gap_args.items():
             _logger.info(">> %10s : %r", k, v)
-        self.category, self.index = pjson.split('/')
+        self.category, self.index = tcname.split('/')
         self.index = int(os.path.splitext(self.index)[0].split('_')[0])
         self._init_mode = init_mode
-        #self._testcase = os.path.join(self.category,
-        #                              str(self.index) + "_" + self.casename + "_task_" + self.task)
-        self._testcase = os.path.splitext(pjson)[0]
         # prepare all inputs file under self._inputdir
-        self._inputdir = os.path.join(inputsdir, self._testcase)
+        self._inputdir = os.path.join(inputsdir, self._tcname)
         # struct file at self._struct
         self._struct = os.path.join(structdir, self.casename + ".struct")
         # wien2k calculation in self._wiendir
@@ -140,7 +124,7 @@ class TestCase(object):
         if workspace is None:
             workspace = "workspace"
         workspace = os.path.join(rootdir, workspace)
-        self._workspace = os.path.join(workspace, self._testcase)
+        self._workspace = os.path.join(workspace, self._tcname)
 
     def init(self, gap_version, dry=False):
         """initialize test case
@@ -200,7 +184,7 @@ class TestCase(object):
                 self._run_gap(gap_x, nprocs)
             except IOError:
                 self.logger.warning("Test case %s has been run before hand. Skip.",
-                                    self._testcase)
+                                    self._tcname)
         self._switch_to_rootdir()
 
     def _init_w2k_scf(self):
@@ -218,7 +202,7 @@ class TestCase(object):
             self.logger.info(">> initializing with %s", " ".join(initlapw))
             sp.check_call(initlapw)
         except sp.CalledProcessError:
-            info = "fail to initialize %s" % self._testcase
+            info = "fail to initialize %s" % self._tcname
             self.logger.error(info)
 
     def _run_gap_init(self, gap_init):
@@ -243,7 +227,7 @@ class TestCase(object):
             self.logger.info(">> run gap_init with %s", " ".join(initgap))
             sp.check_call(initgap)
         except sp.CalledProcessError:
-            info = "fail to run initgap for %s" % self._testcase
+            info = "fail to run initgap for %s" % self._tcname
             self.logger.error(info)
 
     def _run_w2k_scf(self, exe=None):
@@ -259,7 +243,7 @@ class TestCase(object):
             self.logger.info(">> run SCF with %s", " ".join(runlapw))
             sp.check_call(runlapw)
         except sp.CalledProcessError:
-            info = "fail to run SCF for %s" % self._testcase
+            info = "fail to run SCF for %s" % self._tcname
             self.logger.error(info)
 
     def _run_gap(self, gap_x, nprocs, cleanup=True):
@@ -272,11 +256,11 @@ class TestCase(object):
         if nprocs > 1:
             rungap = ["mpirun", "-np", str(nprocs)] + rungap
         try:
-            self.logger.info("> begin to run case: %s", " ".join(self._testcase))
+            self.logger.info("> begin to run case: %s", " ".join(self._tcname))
             self.logger.info(">> command %s", " ".join(rungap))
             sp.check_call(rungap)
         except sp.CalledProcessError:
-            info = "> fail for case: %s" % self._testcase
+            info = "> fail for case: %s" % self._tcname
             self.logger.error(info)
         else:
             self.logger.info("> finished case successfully :)")

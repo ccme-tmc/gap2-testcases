@@ -7,7 +7,7 @@ import re
 import os
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
 
-def gap_parser(docstr, predefine_sets):
+def gap_parser(docstr):
     """parser of gap test"""
     p = ArgumentParser(description=docstr,
                        formatter_class=RawDescriptionHelpFormatter)
@@ -15,8 +15,6 @@ def gap_parser(docstr, predefine_sets):
                     help="testcases to exclude, default to None")
     p.add_argument("-i", dest="include", type=str, default=None, nargs="+",
                    help="testcases to include, default to include all cases")
-    p.add_argument("-s", dest="preset", type=str, default=None, choices=predefine_sets.keys(),
-                   help="name of predefined test set")
     p.add_argument("-n", type=int, dest="nprocs", default=1,
                    help="default number of processors for running")
     p.add_argument("--init", action="store_true",

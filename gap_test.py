@@ -5,19 +5,19 @@
 from __future__ import print_function
 
 from backend.utils import create_logger, gap_parser
-from backend.testcase import TestCase, find_tests, predefine_sets
+from backend.testcase import TestCase, find_tests
 
 __project__ = "gap2-testcases"
 __version__ = "0.0.3"
 
 def gap_test():
     """run initializtion"""
-    args = gap_parser(__doc__, predefine_sets).parse_args()
+    args = gap_parser(__doc__).parse_args()
     logger = create_logger("gaptest", debug=args.debug, stream=False)
     init_mode = False
     testcases = find_tests(include=args.include,
-                           exclude=args.exclude,
-                           use_predef=args.preset)
+                           exclude=args.exclude)
+
     if args.preview:
         print("Preview mode:")
         for i, tc in enumerate(testcases):
