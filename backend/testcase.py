@@ -168,10 +168,14 @@ class TestCase(object):
         else:
             for x in gap_nprocs:
                 if x < nprocs:
-                    x = nprocs
+                    nprocs = x
                     break
+        if gap_suffix is not None:
+            gap_suffix = "-{}".format(gap_suffix)
+        else:
+            gap_suffix = ''
         gap_x = "gap" + gap_version + {1: ""}.get(nprocs, "-mpi") \
-                + {None: ""}.get(gap_suffix, "-{}".format(gap_suffix)) + ".x"
+                + "{}.x".format(gap_suffix)
         if which(gap_x) is None and not dry:
             info = "gap.x for version %s is not found: %s" % (gap_version, gap_x)
             _logger.error(info)
@@ -256,7 +260,7 @@ class TestCase(object):
         if nprocs > 1:
             rungap = ["mpirun", "-np", str(nprocs)] + rungap
         try:
-            self.logger.info("> begin to run case: %s", " ".join(self._tcname))
+            self.logger.info("> begin to run case: %s", self._tcname)
             self.logger.info(">> command %s", " ".join(rungap))
             sp.check_call(rungap)
         except sp.CalledProcessError:

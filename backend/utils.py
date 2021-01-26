@@ -11,6 +11,9 @@ def gap_parser(docstr):
     """parser of gap test"""
     p = ArgumentParser(description=docstr,
                        formatter_class=RawDescriptionHelpFormatter)
+    p.add_argument(dest="gap_version", type=str,
+                   help="version of gap")
+    p.add_argument("-l", dest="logname", type=str, default="gaptest")
     p.add_argument("-x", dest="exclude", type=str, default=None, nargs="+",
                     help="testcases to exclude, default to None")
     p.add_argument("-i", dest="include", type=str, default=None, nargs="+",
@@ -24,8 +27,6 @@ def gap_parser(docstr):
     p.add_argument("--dry", action="store_true", help="dry run for test use")
     p.add_argument("-p", dest="preview", action="store_true",
                    help="preview names of testcases to be run and exit")
-    p.add_argument("--gap", dest="gap_version", type=str, default=None,
-                   help="version of gap")
     p.add_argument("--gf", dest="gap_suffix", type=str, default=None,
                    help="suffix of gap executable, e.g. ir4o in gap2e-mpi-ir4o.x")
     p.add_argument("-d", dest="workspace", type=str, default="workspace",
@@ -45,9 +46,9 @@ def which(executable):
         str, if executable is found in PATH
         None otherwise
     """
-    path = os.popen("which %s" % executable).read()
+    path = os.popen("which %s 2> /dev/null" % executable).read().strip()
     if path:
-        return path.strip()
+        return path
     return None
 
 
@@ -82,7 +83,6 @@ def create_logger(name, debug=False, log=True, stream=True):
     log_level = logging.INFO
     if debug:
         log_level = logging.DEBUG
-    name = name.strip(".log")
     logger = logging.getLogger(name)
     logger.setLevel(log_level)
     if log:

@@ -13,11 +13,10 @@ __version__ = "0.0.3"
 def gap_test():
     """run initializtion"""
     args = gap_parser(__doc__).parse_args()
-    logger = create_logger("gaptest", debug=args.debug, stream=False)
+    logger = create_logger(args.logname, debug=args.debug, stream=False)
     init_mode = False
     testcases = find_tests(include=args.include,
                            exclude=args.exclude)
-
     if args.preview:
         print("Preview mode:")
         for i, tc in enumerate(testcases):
@@ -34,8 +33,8 @@ def gap_test():
                       init_mode=init_mode,
                       force_restart=args.force_restart)
         tc.init(args.gap_version, dry=args.dry)
-        tc.run(args.gap_version, args.gap_suffix,
-               nprocs=args.nprocs, dry=args.dry)
+        tc.run(args.gap_version, args.gap_suffix, nprocs=args.nprocs,
+               dry=args.dry)
 
 
 if __name__ == "__main__":
