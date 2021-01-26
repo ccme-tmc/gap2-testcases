@@ -173,6 +173,8 @@ class TestCase(object):
             maxnprocs (int)
             dry (bool) : fake run for workflow test
         """
+        if self._init_mode:
+            return
         gap_nprocs = [self._gap_nprocs,]
         if isinstance(self._gap_nprocs, list):
             gap_nprocs = self._gap_nprocs
