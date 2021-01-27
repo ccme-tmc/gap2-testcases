@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """testcase object"""
-# pylint: disable=R0205,W0707
 from __future__ import print_function
 import os
 import glob
@@ -83,7 +82,8 @@ class TestCase(object):
 
     Args:
         tcname (str): name of testcase, relative to the init directory
-        logger (logging.Logger): logger for recording running info
+        logger (logging.Logger): logger for recording running info and results
+            For driver and initializaiton info, use _logger
     """
     def __init__(self, tcname, logger, init_mode=False,
                  workspace=None, force_restart=False, **kwargs):
@@ -95,17 +95,18 @@ class TestCase(object):
         _logger.info("> case loaded, information:")
         try:
             for key in ["casename", "rkmax", "is_sp", "task"]:
-                _logger.info(">> %s: %s", key, d[key])
-                self.__setattr__(key, d[key])
+                v = d.pop(key)
+                _logger.info(">> %s: %s", key, v)
+                self.__setattr__(key, v)
         except KeyError:
             raise KeyError("broken testcase file, missing required key %s" % key)
-        self.scf_args = d["scf"]
+        self.scf_args = d.pop("scf")
         _logger.info(">> wien2k SCF initialization parameters:")
         for k, v in self.scf_args.items():
             _logger.info(">> %10s : %r", k, v)
-        self._w2k_nprocs = self.scf_args.get("nprocs", 1)
-        self.gap_args = d["gap"]
-        self._gap_nprocs = self.gap_args.get("nprocs", 1)
+        self._w2k_nprocs = self.scf_args.pop("nprocs", 1)
+        self.gap_args = d.pop("gap")
+        self._gap_nprocs = self.gap_args.pop("nprocs", 1)
         _logger.info(">> gap initialization parameters:")
         for k, v in self.gap_args.items():
             _logger.info(">> %10s : %r", k, v)
@@ -228,11 +229,11 @@ class TestCase(object):
         for k, v in self.gap_args.items():
             initgap.extend(["-"+k, str(v)])
         try:
-            self.logger.info(">> run gap_init with %s", " ".join(initgap))
+            _logger.info(">> run gap_init with %s", " ".join(initgap))
             sp.check_call(initgap)
         except sp.CalledProcessError:
             info = "fail to run initgap for %s" % self._tcname
-            self.logger.error(info)
+            _logger.error(info)
 
     def _run_w2k_scf(self, exe=None):
         """run wien2k calculation"""
@@ -244,11 +245,11 @@ class TestCase(object):
         ec = self.scf_args.get("ec")
         runlapw = [exe, "-ec", "%15.12f" % ec]
         try:
-            self.logger.info(">> run SCF with %s", " ".join(runlapw))
+            _logger.info(">> run SCF with %s", " ".join(runlapw))
             sp.check_call(runlapw)
         except sp.CalledProcessError:
             info = "fail to run SCF for %s" % self._tcname
-            self.logger.error(info)
+            _logger.error(info)
 
     def _run_gap(self, gap_x, nprocs, cleanup=True):
         """run gap calculation
@@ -269,6 +270,7 @@ class TestCase(object):
         else:
             self.logger.info("> finished case successfully :)")
             # TODO analyse data when finished successfully
+        finally:
             if cleanup:
                 self.logger.info("> clean up large files in tmp")
                 for ext in ["eps", "mwm", "vmat", "sxc_nn", "sx_nn"]:

@@ -9,7 +9,7 @@ Testsuite for testing GAP2 codes. (build time)
 - GAP (>=2c) code, for generating inputs for GW and running test.
 
 Note that environment variable `WIENROOT` must be set if one wants
-to initialze the WIEN2k and GAP inputs.
+to initialize the WIEN2k and GAP inputs.
 
 ## Usage
 
@@ -28,16 +28,14 @@ to `path/to/store`. Pay attention to large temporary files, e.g. `.eps`, when co
 ```plain
 ├── backend
 ├── init
-│   ├── ml
-│   ├── sp
-│   └── tmo
+├── refs
 └── struct_files
 ```
 
 Explanation:
 
 - `backend`: supporting facilities for the driver script `gap_test.py`
-- `init`: initialization files of test cases, grouped by category of material or target test functionality
+- `init`: initialization files of test cases, grouped by target test functionality and/or category of material
 - `struct_files`: repository of `.struct` WIEN2k master input files
 
 ## Prepare inputs
@@ -58,13 +56,14 @@ If you already have the SCF inputs and only need to regenerate the GAP input, yo
 python gap_test.py --init-gap
 ```
 
-## Test cases
+## JSON as control for test cases
 
-### Definition of WIEN2k and GAP inputs for test case
+This part gives more details about initialization of WIEN2k and GAP inputs as well as running for a test case.
+Each test case is defined by a control file named after `dddd_xxxx.json`, where `dddd` is an integer number and `xxxx` is any explaning strings for users. The controls files are stored in subdirectories in  `init`.
 
-This part gives more details about initialization of WIEN2k and GAP inputs for a test case.
-The control file is named after `xxx.json`, where `xxx` is an integer number.
-For example, a test case for silicon has the following JSON structure
+### Generator file
+
+A test case for silicon has the following JSON structure
 
 ```json
 {
@@ -83,13 +82,16 @@ For example, a test case for silicon has the following JSON structure
   "gap": {
     "version": null,
     "kmesh_gw": [2, 2, 2],
+    "nprocs": [64, 32, 16, 8, 4, 2, 1],
     "nkpt": 8,
     "emax": 5.0
   }
 }
 ```
 
-The meaning of each key-value pair:
+The meaning of each key-value pair is explained below.
+
+#### Required keys
 
 - `casename`: the case name of struct file. Note that the driver will try to find the `struct` file with the same case name in the `struct_files` directory. Make sure that this file exists.
 - `task`: category of task for present test.
@@ -98,7 +100,7 @@ The meaning of each key-value pair:
 - `scf`: a dictionary containing the initialization and running parameters for WIEN2k self-consistent field calculation.
 - `gap`: a dictionary containing the parameters parsed to `gap_init`.
 
-For `scf` dictionary:
+#### `scf` dictionary
 
 - `version`: required WIEN2k version. `null` for any version.
 - `vxc`: an integer number for specification of exchange-correlation functional
@@ -108,11 +110,12 @@ For `scf` dictionary:
 
 and other parameters that `init_lapw` accpets.
 
-For `gap` dictionary:
+#### `gap` dictionary
 
 - `version`: required GAP version. `null` for any version.
 - `nkp`: number of kpoints for GW
 - `kmesh_gw`: intended kmesh for GW set by `kgen` with `nkp`
+- `nprocs`: number of processors appropriate for running the case. It is usually a factor of the number of q(k) points. The driver will detect the largest one smaller than the number of available processors.
 
 and other parameters that `gap_init` accepts.
 
@@ -120,5 +123,18 @@ and other parameters that `gap_init` accepts.
 
 All test cases are placed in the `init` directory
 
+```plain
+init
+├── JH16  : GW test cases used in H. Jiang, PRB 93, 115203 (2016)
+├── gw_ml : GW test cases of monolayer structures
+├── gw_sp : GW test cases of sp semiconductor
+├── gw_tm : GW test cases of transition metal compounds
+├── hf_ml : Hartree-Fock test cases of monolayer structures
+└── hf_sp : Hartree-Fock test cases of sp semiconductor
+```
+
+
+
 ## TODO
 
+- [ ] keys for HLOs inputs. This may involve changing the behavior of `gap2<ver>_init`
