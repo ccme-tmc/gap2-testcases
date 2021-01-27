@@ -134,7 +134,9 @@ init
 ```
 
 
-
 ## TODO
 
 - [ ] keys for HLOs inputs. This may involve changing the behavior of `gap2<ver>_init`
+- [ ] data analysis and comparison
+- [ ] packing and display of results
+
