@@ -124,8 +124,13 @@ def check_wien2k_version(require_version):
     return False
 
 def cleanup_tmp(ext):
-    """clean up large files in tmp directory generated from GAP2 calculation"""
-    pat = "tmp/*{}*".format(ext)
+    """clean up large files in tmp directory generated from GAP2 calculation
+
+    Args:
+        ext (str): part of the extension name
+
+    """
+    pat = "tmp/*.{}*".format(ext)
     fs = glob.glob(pat)
     for f in fs:
         os.unlink(f)

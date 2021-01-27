@@ -271,7 +271,7 @@ class TestCase(object):
             # TODO analyse data when finished successfully
             if cleanup:
                 self.logger.info("> clean up large files in tmp")
-                for ext in ["eps", "mwm", "vmat"]:
+                for ext in ["eps", "mwm", "vmat", "sxc_nn", "sx_nn"]:
                     self.logger.info(">> cleaning %s", ext)
                     cleanup_tmp(ext)
 
