@@ -5,6 +5,7 @@ import os
 import glob
 import json
 import subprocess as sp
+import datetime as dt
 from shutil import copy2
 
 from .utils import which, create_logger, intify, cleanup_tmp
@@ -263,7 +264,10 @@ class TestCase(object):
         try:
             self.logger.info("> begin to run case: %s", self._tcname)
             self.logger.info(">> command %s", " ".join(rungap))
-            sp.check_call(rungap)
+            with open("gaptest_{}.log".format(dt.datetime.today().strftime("%y%m%d-%H%M%S")),
+                      'w') as h:
+                proc = sp.Popen(rungap, stdout=h, stderr=sp.STDOUT)
+                proc.wait()
         except sp.CalledProcessError:
             info = "> fail for case: %s" % self._tcname
             self.logger.error(info)
