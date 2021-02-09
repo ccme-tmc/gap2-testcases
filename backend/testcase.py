@@ -159,6 +159,7 @@ class TestCase(object):
             maxnprocs (int)
             dry (bool) : fake run for workflow test
         """
+        # quickly return if in initialization mode
         if self._init_mode:
             return
         gap_nprocs = [self._gap_nprocs,]
@@ -182,15 +183,15 @@ class TestCase(object):
             info = "gap.x for version %s is not found: %s" % (gap_version, gap_x)
             _logger.error(info)
             raise ValueError(info)
-
-        self._link_inputs_to_workspace_case()
+        try:
+            self._link_inputs_to_workspace_case()
+        except IOError:
+            self.logger.warning("Test case %s has been skipped.",
+                                 self._tcname)
+            return
         self._switch_to_workspace_case()
         if not dry:
-            try:
-                self._run_gap(gap_x, nprocs)
-            except IOError:
-                self.logger.warning("Test case %s has been run before hand. Skip.",
-                                    self._tcname)
+            self._run_gap(gap_x, nprocs)
         self._switch_to_rootdir()
 
     def _init_w2k_scf(self):
@@ -302,9 +303,9 @@ class TestCase(object):
         if os.path.isdir(self._workspace):
             if self._force_restart:
                 #rmtree(self._workspace)
-                self.logger.warning("force restart anyway")
+                self.logger.warning("forced restart anyway")
                 return
-            raise IOError("workspace directory exists: {}.\nUse --force to run anyway"
+            raise IOError("workspace directory exists: {}. skip\nUse --force to run anyway"
                           .format(self._workspace))
         os.makedirs(self._workspace)
         for f in [self.casename + "." + ext for ext in gapinput_ext] + ["gw.inp"]:

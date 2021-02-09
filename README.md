@@ -1,10 +1,10 @@
 # gap2-testcases
 
-Testsuite for testing GAP2 codes. (build time)
+Testsuite and driver facilities for testing GAP2 codes. (build time)
 
 ## Requirements
 
-- Python >= 3.5 or Python2 >= 2.7.18 to run generator script.
+- Python >= 3.5 or Python2 >= 2.7.18 to run the driver script.
 - WIEN2k for preparing DFT starting point. Favorably version 14.2
 - GAP (>=2c) code, for generating inputs for GW and running test.
 
@@ -40,9 +40,11 @@ Explanation:
 
 ## Prepare inputs
 
-The cases distributed along with the test infrastructure cannot be run directly,
-since the input files for GAP can be too large for convenient distribution.
-Users need to generate the WIEN2k and GW inputs themselves. Issue the command
+The cases distributed along with the test infrastructure cannot be run directly after clone,
+since the input files for GAP in some testcases can be too large for a compact remote repository.
+Therefore users need to generate the WIEN2k and GW inputs themselves.
+
+To do this, please issue the command
 
 ```bash
 python gap_test.py --init
@@ -50,7 +52,7 @@ python gap_test.py --init
 
 to start a WIEN2k calculation and a following `gap2_init`. Make sure that `run_lapw` is available from the environment.
 
-If you already have the SCF inputs and only need to regenerate the GAP input, you can run
+If you already have the SCF inputs and only need to regenerate the GAP inputs, you can run
 
 ```bash
 python gap_test.py --init-gap
