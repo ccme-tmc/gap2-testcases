@@ -8,7 +8,7 @@ import subprocess as sp
 import datetime as dt
 from shutil import copy2
 
-from .utils import which, create_logger, intify, cleanup_tmp
+from .utils import which, create_logger, intify, cleanup_tmp, get_divisors
 
 _logger = create_logger("testdriver", log=False, stream=True)
 del create_logger
@@ -107,7 +107,9 @@ class TestCase(object):
             _logger.info(">> %10s : %r", k, v)
         self._w2k_nprocs = self.scf_args.pop("nprocs", 1)
         self.gap_args = d.pop("gap")
-        self._gap_nprocs = self.gap_args.pop("nprocs", 1)
+        self._gap_nprocs = self.gap_args.pop("nprocs", None)
+        if self._gap_nprocs is None:
+            self._gap_nprocs = get_divisors(self.gap_args["nkp"])
         _logger.info(">> gap initialization parameters:")
         for k, v in self.gap_args.items():
             _logger.info(">> %10s : %r", k, v)

@@ -13,7 +13,8 @@ __version__ = "0.0.3"
 def gap_test():
     """run initializtion"""
     args = gap_parser(__doc__).parse_args()
-    logger = create_logger(args.logname, debug=args.debug, stream=False)
+    logger = create_logger(args.logname, debug=args.debug, stream=False,
+                           append=args.append)
     init_mode = False
     testcases = find_tests(include=args.include,
                            exclude=args.exclude)

@@ -32,6 +32,8 @@ def gap_parser(docstr):
     p.add_argument("-d", dest="workspace", type=str, default="workspace",
                    help="working directory")
     p.add_argument("-D", dest="debug", action="store_true", help="debug mode")
+    p.add_argument("-a", dest="append", action="store_true",
+                   help="append mode for logger")
     p.add_argument("--force", dest="force_restart", action="store_true",
                    help="forcing restart an existing testcase")
     return p
@@ -73,7 +75,7 @@ def trim_after(string, regex, include_pattern=False):
     return string
 
 
-def create_logger(name, debug=False, log=True, stream=True):
+def create_logger(name, debug=False, log=True, stream=True, append=False):
     """create a logger
 
     Args:
@@ -85,8 +87,11 @@ def create_logger(name, debug=False, log=True, stream=True):
         log_level = logging.DEBUG
     logger = logging.getLogger(name)
     logger.setLevel(log_level)
+    mode = 'w'
+    if append:
+        mode = 'a'
     if log:
-        hand_file = logging.FileHandler(name+".log", mode='w')
+        hand_file = logging.FileHandler(name+".log", mode=mode)
         hand_file.setLevel(log_level)
         form_file = logging.Formatter(fmt='%(asctime)s - %(name)7s:%(levelname)8s - %(message)s',
                                       datefmt='%Y-%m-%d %H:%M:%S')
@@ -135,3 +140,31 @@ def cleanup_tmp(ext):
     for f in fs:
         os.unlink(f)
 
+def get_divisors(num, ascend=False):
+    """get all divisors of integer num
+
+    Args:
+        num (int)
+        ascend (bool): if True, the divisors are sorted in ascending order.
+            Otherwise in descending order.
+
+    Returns:
+        list
+    """
+    seq = (num, 0, -1)
+    if ascend:
+        seq = (1, num+1, 1)
+    return [i for i in range(*seq) if num%i == 0]
+
+# run itself as test
+if __name__ == "__main__":
+    import unittest as ut
+
+    class test_utils(ut.TestCase):
+        def test_get_divisors(self):
+            """get divisors of integers"""
+            self.assertListEqual([9, 3, 1], get_divisors(9))
+            self.assertListEqual([1, 3, 9], get_divisors(9, ascend=True))
+            self.assertListEqual([216, 108, 72, 54, 36, 27, 24, 18, 12, 9, 8, 6, 4, 3, 2, 1],
+                                 get_divisors(216))
+    ut.main()
