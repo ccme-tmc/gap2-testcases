@@ -172,9 +172,11 @@ class TestCase(object):
             nprocs = gap_nprocs[0]
         else:
             for x in gap_nprocs:
-                if x < nprocs:
+                if x <= nprocs:
                     nprocs = x
                     break
+        _logger.info(">> using %d processors", nprocs)
+        _logger.info(">>   from %r", gap_nprocs)
         if gap_suffix is not None:
             gap_suffix = "-{}".format(gap_suffix)
         else:
