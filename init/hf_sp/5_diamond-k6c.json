@@ -1,0 +1,21 @@
+{
+  "casename": "diamond",
+  "task": "hf",
+  "is_sp": false,
+  "rkmax": 7.0,
+  "scf": {
+    "version": null,
+    "kmesh_scf": [8, 8, 8],
+    "numk": 512,
+    "ecut": -6.0,
+    "ec": 1.0e-8,
+    "vxc": 13
+  },
+  "gap": {
+    "version": null,
+    "kmesh_gw": [6, 6, 6],
+    "nkp": 216,
+    "emax": 20.0,
+    "bzq0": 0
+  }
+}

@@ -276,8 +276,11 @@ class TestCase(object):
         except sp.CalledProcessError:
             info = "> fail for case: %s" % self._tcname
             self.logger.error(info)
+            _logger.error(info)
         else:
-            self.logger.info("> finished case successfully :)")
+            info = "> finished case successfully :)"
+            self.logger.info(info)
+            _logger.info(info)
             # TODO analyse data when finished successfully
         finally:
             if cleanup:
@@ -312,10 +315,15 @@ class TestCase(object):
             raise IOError("workspace directory exists: {}. skip\nUse --force to run anyway"
                           .format(self._workspace))
         os.makedirs(self._workspace)
-        for f in [self.casename + "." + ext for ext in gapinput_ext] + ["gw.inp"]:
+        # symlink the case-related files to save space
+        # but copy gw.inp for quick testing without changing the original file
+        for f in [self.casename + "." + ext for ext in gapinput_ext] + ["gw.inp",]:
             src = os.path.join(self._gapdir, f)
             dst = os.path.join(self._workspace, f)
             if os.path.isfile(src):
-                os.symlink(src, dst)
-                _logger.debug("linking %s to %s", src, dst)
+                if f == "gw.inp":
+                    copy2(src, dst)
+                else:
+                    os.symlink(src, dst)
+                    _logger.debug("linking %s to %s", src, dst)
 
