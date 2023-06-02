@@ -1,6 +1,6 @@
 DIAMOND CARBON
 F   LATTICE,NONEQUIV.ATOMS:  1                                                 
-MODE OF CALC=RELA unit=ang                                                     
+MODE OF CALC=RELA
   6.740260  6.740260  6.740260 90.000000 90.000000 90.000000                   
 ATOM   1: X=0.12500000 Y=0.12500000 Z=0.12500000
           MULT= 2          ISPLIT= 2
